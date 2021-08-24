@@ -44,10 +44,10 @@ namespace Nethermind.Runner.Ethereum.Steps
 
                 HiveRunner hiveRunner = new(
                     _api.BlockTree,
+                    _api.EthereumJsonSerializer,
                     _api.ConfigProvider,
                     _api.LogManager.GetClassLogger(),
-                    _api.FileSystem,
-                    _api.BlockValidator
+                    _api.FileSystem
                 );
                 
                 await hiveRunner.Start(cancellationToken);

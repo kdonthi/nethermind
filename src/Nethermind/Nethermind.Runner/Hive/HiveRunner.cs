@@ -22,7 +22,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Nethermind.Blockchain;
-using Nethermind.Blockchain.Validators;
 using Nethermind.Config;
 using Nethermind.Core;
 using Nethermind.Core.Extensions;
@@ -38,44 +37,38 @@ namespace Nethermind.Runner.Hive
         private readonly ILogger _logger;
         private readonly IConfigProvider _configurationProvider;
         private readonly IFileSystem _fileSystem;
-        private readonly IBlockValidator _blockValidator;
-        private SemaphoreSlim _resetEvent;
         
-        public HiveRunner(
-            IBlockTree blockTree,
+        public HiveRunner(IBlockTree blockTree,
+            IJsonSerializer jsonSerializer,
             IConfigProvider configurationProvider,
             ILogger logger,
-            IFileSystem fileSystem, 
-            IBlockValidator blockValidator)
+            IFileSystem fileSystem)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _blockTree = blockTree ?? throw new ArgumentNullException(nameof(blockTree));
             _configurationProvider = configurationProvider ?? throw new ArgumentNullException(nameof(configurationProvider));
             _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
-            _blockValidator = blockValidator;
-
-            _resetEvent = new SemaphoreSlim(0);
         }
 
-        public async Task Start(CancellationToken cancellationToken)
+        public Task Start(CancellationToken cancellationToken)
         {
             if(_logger.IsInfo) _logger.Info("HIVE initialization started");
             _blockTree.NewHeadBlock += BlockTreeOnNewHeadBlock;
             var hiveConfig = _configurationProvider.GetConfig<IHiveConfig>();
 
             ListEnvironmentVariables();
-            await InitializeBlocks(hiveConfig.BlocksDir, cancellationToken);
-            await InitializeChain(hiveConfig.ChainFile);
+            InitializeBlocks(hiveConfig.BlocksDir, cancellationToken);
+            InitializeChain(hiveConfig.ChainFile);
 
             _blockTree.NewHeadBlock -= BlockTreeOnNewHeadBlock;
 
             if(_logger.IsInfo) _logger.Info("HIVE initialization completed");
+            return Task.CompletedTask;
         }
 
         private void BlockTreeOnNewHeadBlock(object? sender, BlockEventArgs e)
         {
             _logger.Info($"HIVE new head block {e.Block.ToString(Block.Format.Short)}");
-                _resetEvent.Release(1);
         }
 
         private void ListEnvironmentVariables()
@@ -110,7 +103,7 @@ namespace Nethermind.Runner.Hive
             await Task.CompletedTask;
         }
 
-        private async Task InitializeBlocks(string blocksDir, CancellationToken cancellationToken)
+        private void InitializeBlocks(string blocksDir, CancellationToken cancellationToken)
         {
             if (!Directory.Exists(blocksDir))
             {
@@ -131,11 +124,11 @@ namespace Nethermind.Runner.Hive
                 }
                 
                 if (_logger.IsInfo) _logger.Info($"HIVE Processing block file: {block.File} - {block.Block.ToString(Block.Format.Short)}");
-                await ProcessBlock(block.Block);
+                ProcessBlock(block.Block);
             }
         }
 
-        private async Task InitializeChain(string chainFile)
+        private void InitializeChain(string chainFile)
         {
             if (!_fileSystem.File.Exists(chainFile))
             {
@@ -160,7 +153,7 @@ namespace Nethermind.Runner.Hive
             {
                 Block block = blocks[i];
                 if (_logger.IsInfo) _logger.Info($"HIVE Processing a chain.rlp block {block.ToString(Block.Format.Short)}");
-                await ProcessBlock(block);
+                ProcessBlock(block);
             }
         }
 
@@ -172,33 +165,18 @@ namespace Nethermind.Runner.Hive
 
             return Rlp.Decode<Block>(blockRlp);
         }
-        
-        private async Task WaitAsync(SemaphoreSlim semaphore, string error)
-        {
-            if (!await semaphore.WaitAsync(-1))
-            {
-                throw new InvalidOperationException(error);
-            }
-        }
 
-        private async Task ProcessBlock(Block block)
+        private void ProcessBlock(Block block)
         {
             try
             {
-                if (!_blockValidator.Validate(block.Header))
-                {
-                    if (_logger.IsInfo) _logger.Info($"Invalid block {block}");
-                    return;
-                }
+                _blockTree.SuggestBlock(block);
 
-                var result = _blockTree.SuggestBlock(block);
-                await WaitAsync(_resetEvent, string.Empty);
                 if (_logger.IsInfo) _logger.Info($"HIVE suggested {block.ToString(Block.Format.Short)}, now best suggested header {_blockTree.BestSuggestedHeader}, head {_blockTree.Head?.Header?.ToString(BlockHeader.Format.Short)}");
             }
-            catch (Exception e)
+            catch (InvalidBlockException e)
             {
                 _logger.Error($"HIVE Invalid block: {block.Hash}, ignoring", e);
-                _resetEvent.Release(1);
             }
         }
     }
