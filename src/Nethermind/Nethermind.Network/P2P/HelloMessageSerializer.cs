@@ -17,6 +17,7 @@
 using System;
 using System.Linq;
 using Nethermind.Core.Crypto;
+using Nethermind.Core.Extensions;
 using Nethermind.Serialization.Rlp;
 using Nethermind.Stats.Model;
 
@@ -61,7 +62,7 @@ namespace Nethermind.Network.P2P
             {
                 throw new NetworkingException(
                     $"Client {helloMessage.ClientId} sent an invalid public key format " +
-                    $"(length was {publicKeyBytes.Length})",
+                    $"(length was {publicKeyBytes.Length}), Bytes: {bytes.ToHexString()}",
                     NetworkExceptionType.HandshakeOrInit);
             }
             else
