@@ -64,7 +64,7 @@ namespace Nethermind.Network.P2P
         {
             Interlocked.Increment(ref Counter);
             if (Logger.IsTrace) Logger.Trace($"{Counter} Sending {typeof(T).Name}");
-            if (Logger.IsWarn) Logger.Warn($"{Counter} Sending {typeof(T).Name}, Address: {Session.Node?.Address}, Name: {Name}, Message: {message.ToString()}");
+            if (Logger.IsWarn) Logger.Warn($"{Counter} Sending358 {typeof(T).Name}, Address: {Session.Node?.Address}, Name: {Name}, Message: {message.ToString()}");
 
             if(NetworkDiagTracer.IsEnabled)
                 NetworkDiagTracer.ReportOutgoingMessage(Session.Node?.Address, Name, message.ToString());

@@ -168,7 +168,7 @@ namespace Nethermind.Network.Rlpx
 
             Task<IChannel> connectTask = clientBootstrap.ConnectAsync(node.Address);
             CancellationTokenSource delayCancellation = new();
-            Task firstTask = await Task.WhenAny(connectTask, Task.Delay(Timeouts.InitialConnection.Add(TimeSpan.FromSeconds(2)), delayCancellation.Token));
+            Task firstTask = await Task.WhenAny(connectTask, Task.Delay(Timeouts.InitialConnection.Add(TimeSpan.FromSeconds(20)), delayCancellation.Token));
             if (firstTask != connectTask)
             {
                 if (_logger.IsTrace) _logger.Trace($"|NetworkTrace| {node:s} OUT connection timed out");

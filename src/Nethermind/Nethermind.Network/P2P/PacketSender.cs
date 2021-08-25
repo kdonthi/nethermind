@@ -17,7 +17,9 @@
 using System;
 using DotNetty.Buffers;
 using DotNetty.Transport.Channels;
+using Nethermind.Core.Extensions;
 using Nethermind.Logging;
+using Nethermind.Network.P2P.Subprotocols.Eth.V62;
 
 namespace Nethermind.Network.P2P
 {
@@ -41,6 +43,7 @@ namespace Nethermind.Network.P2P
             }
             
             IByteBuffer buffer = _messageSerializationService.ZeroSerialize(message);
+            if (message.PacketType == Eth62MessageCode.NewBlock || message.PacketType == Eth62MessageCode.NewBlockHashes) _logger.Warn($"RLP of message: {_messageSerializationService.Serialize(message).ToHexString()}, message: {message.ToString()}");
             var length = buffer.ReadableBytes;
             _context.WriteAndFlushAsync(buffer).ContinueWith(t =>
             {
