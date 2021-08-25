@@ -43,7 +43,7 @@ namespace Nethermind.Network.P2P
             }
             
             IByteBuffer buffer = _messageSerializationService.ZeroSerialize(message);
-            if (message.PacketType == Eth62MessageCode.NewBlock || message.PacketType == Eth62MessageCode.NewBlockHashes) _logger.Warn($"RLP of message: {_messageSerializationService.Serialize(message).ToHexString()}, message: {message.ToString()}");
+            if (message.PacketType == Eth62MessageCode.NewBlock || message.PacketType == Eth62MessageCode.NewBlockHashes) _logger.Warn($"message358: {message.ToString()}");
             var length = buffer.ReadableBytes;
             _context.WriteAndFlushAsync(buffer).ContinueWith(t =>
             {
