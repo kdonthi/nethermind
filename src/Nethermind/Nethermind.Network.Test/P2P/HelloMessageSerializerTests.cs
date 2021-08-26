@@ -15,7 +15,6 @@
 //  along with the Nethermind. If not, see <http://www.gnu.org/licenses/>.
 
 using System.Collections.Generic;
-using FluentAssertions;
 using Nethermind.Core.Crypto;
 using Nethermind.Core.Extensions;
 using Nethermind.Network.P2P;
@@ -55,18 +54,6 @@ namespace Nethermind.Network.Test.P2P
             Assert.AreEqual(helloMessage.Capabilities.Count, deserialized.Capabilities.Count);
             Assert.AreEqual(helloMessage.Capabilities[0].ProtocolCode, deserialized.Capabilities[0].ProtocolCode);
             Assert.AreEqual(helloMessage.Capabilities[0].Version, deserialized.Capabilities[0].Version);
-        }
-        
-        [Test]
-        public void Can_do_roundtrip222()
-        {
-            HelloMessageSerializer serializer = new HelloMessageSerializer();
-            byte[] initial = Bytes.FromHexString("f8920580ccc58365746840c5836574684180b880771c0ef623731f2946a4b70b6b3c065df1a45c613cc71e3879b8d0187a63db8fc306a8ed6081aaad8b0cf418310f267b15295b0d50f662e804767a3c46e878a6771c0ef623731f2946a4b70b6b3c065df1a45c613cc71e3879b8d0187a63db8fc306a8ed6081aaad8b0cf418310f267b15295b0d50f662e804767a3c46e878a6");
-            
-            HelloMessage deserialized = serializer.Deserialize(initial);
-            byte[] serialized = serializer.Serialize(deserialized);
-
-            serialized.Should().BeEquivalentTo(initial);
         }
         
         [Test]
