@@ -21,6 +21,6 @@ namespace Nethermind.Network.P2P.Subprotocols.Eth.V66
 {
     internal static class RandomExtensions
     {
-        public static ulong NextLong(this Random random) => ((ulong)random.Next() << 32) | (ulong)random.Next();
+        public static long NextLong(this Random random) => ((long)random.Next() << 32) | (long)random.Next();
     }
 }

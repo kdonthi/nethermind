@@ -21,14 +21,14 @@ namespace Nethermind.Network.P2P.Subprotocols.Eth.V66
     {
         public override int PacketType => EthMessage.PacketType;
         public override string Protocol => EthMessage.Protocol;
-        public ulong RequestId { get; set; } = Eth66MessageConstants.Random.NextLong();
+        public long RequestId { get; set; } = Eth66MessageConstants.Random.NextLong();
         public T EthMessage { get; set; }
 
         protected Eth66Message() 
         {
         }
 
-        protected Eth66Message(ulong requestId, T ethMessage)
+        protected Eth66Message(long requestId, T ethMessage)
         {
             RequestId = requestId;
             EthMessage = ethMessage;

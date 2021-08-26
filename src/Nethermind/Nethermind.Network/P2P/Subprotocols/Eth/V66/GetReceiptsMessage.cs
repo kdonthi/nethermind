@@ -23,7 +23,7 @@ namespace Nethermind.Network.P2P.Subprotocols.Eth.V66
         {
         }
         
-        public GetReceiptsMessage(ulong requestId, Eth.V63.GetReceiptsMessage ethMessage) : base(requestId, ethMessage)
+        public GetReceiptsMessage(long requestId, Eth.V63.GetReceiptsMessage ethMessage) : base(requestId, ethMessage)
         {
         }
     }

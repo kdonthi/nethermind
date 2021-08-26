@@ -23,7 +23,7 @@ namespace Nethermind.Network.P2P.Subprotocols.Eth.V66
         {
         }
         
-        public PooledTransactionsMessage(ulong requestId, Eth.V65.PooledTransactionsMessage ethMessage) : base(requestId, ethMessage)
+        public PooledTransactionsMessage(long requestId, Eth.V65.PooledTransactionsMessage ethMessage) : base(requestId, ethMessage)
         {
         }
     }
