@@ -236,6 +236,7 @@ namespace Nethermind.Network.P2P
         {
             GetBlockHeadersMessage msg = new();
             msg.StartBlockHash = hash ?? _remoteHeadBlockHash;
+            msg.MaxHeaders = 1;
             msg.Reverse = 0;
             msg.Skip = 0;
 
