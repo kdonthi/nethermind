@@ -15,10 +15,12 @@
 //  along with the Nethermind. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Nethermind.Core;
+using Nethermind.Core.Crypto;
 using Nethermind.Core.Specs;
 using Nethermind.Logging;
 using Nethermind.Network.P2P.Subprotocols.Eth.V64;
@@ -52,6 +54,8 @@ namespace Nethermind.Network.P2P.Subprotocols.Eth.V65
         public override string Name => "eth65";
 
         public override byte ProtocolVersion => 65;
+
+        private ConcurrentBag<Keccak> _msgHashesBag = new();
 
         public override void HandleMessage(ZeroPacket message)
         {
@@ -130,8 +134,14 @@ namespace Nethermind.Network.P2P.Subprotocols.Eth.V65
             else
             {
                 Counter++;
-                NewPooledTransactionHashesMessage msg = new(new[] {transaction.Hash});
-                Send(msg);
+                _msgHashesBag.Add(transaction.Hash);
+                
+                if (_msgHashesBag.Count > 2000)
+                {
+                    NewPooledTransactionHashesMessage msg = new(_msgHashesBag.ToArray());
+                    Send(msg);
+                    _msgHashesBag.Clear();
+                }
             }
 
             return true;
