@@ -240,7 +240,7 @@ namespace Nethermind.Network.P2P
             msg.Reverse = 0;
             msg.Skip = 0;
 
-            BlockHeader[] headers = await SendRequest(msg, token);
+            BlockHeader[] headers = await SendRequest62(msg, token);
             return headers.Length > 0 ? headers[0] : null;
         }
 

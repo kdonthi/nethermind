@@ -41,6 +41,8 @@ namespace Nethermind.Network.P2P.Subprotocols.Eth.V66
         private readonly MessageQueue<GetNodeDataMessage, byte[][]> _nodeDataRequests66;
         private readonly MessageQueue<GetReceiptsMessage, TxReceipt[][]> _receiptsRequests66;
         private readonly IPooledTxsRequestor _pooledTxsRequestor;
+        private readonly ILogger _logger;
+        private readonly IMessageSerializationService _serializer;
 
         public Eth66ProtocolHandler(ISession session,
             IMessageSerializationService serializer,
@@ -57,6 +59,8 @@ namespace Nethermind.Network.P2P.Subprotocols.Eth.V66
             _nodeDataRequests66 = new MessageQueue<GetNodeDataMessage, byte[][]>(Send);
             _receiptsRequests66 = new MessageQueue<GetReceiptsMessage, TxReceipt[][]>(Send);
             _pooledTxsRequestor = pooledTxsRequestor;
+            _logger = logManager.GetClassLogger();
+            _serializer = serializer;
         }
         
         public override string Name => "eth66";
@@ -70,6 +74,7 @@ namespace Nethermind.Network.P2P.Subprotocols.Eth.V66
             switch (message.PacketType)
             {
                 case Eth66MessageCode.GetBlockHeaders:
+                    _logger.Warn($"GetBlockHeadersMessage received RLP: {message.Content.Duplicate().ReadAllHex()}");
                     GetBlockHeadersMessage getBlockHeadersMessage
                         = Deserialize<GetBlockHeadersMessage>(message.Content);
                     Metrics.Eth66GetBlockHeadersReceived++;
@@ -77,6 +82,7 @@ namespace Nethermind.Network.P2P.Subprotocols.Eth.V66
                     Handle(getBlockHeadersMessage);
                     break;
                 case Eth66MessageCode.BlockHeaders:
+                    _logger.Warn($"BlockHeadersMessage received RLP: {message.Content.Duplicate().ReadAllHex()}");
                     BlockHeadersMessage headersMsg = Deserialize<BlockHeadersMessage>(message.Content);
                     Metrics.Eth66BlockHeadersReceived++;
                     ReportIn(headersMsg);
