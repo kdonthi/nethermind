@@ -23,7 +23,7 @@ namespace Nethermind.Network.P2P.Subprotocols.Eth.V66
         {
         }
         
-        public GetBlockBodiesMessage(long requestId, Eth.V62.GetBlockBodiesMessage ethMessage) : base(requestId, ethMessage)
+        public GetBlockBodiesMessage(ulong requestId, Eth.V62.GetBlockBodiesMessage ethMessage) : base(requestId, ethMessage)
         {
         }
     }

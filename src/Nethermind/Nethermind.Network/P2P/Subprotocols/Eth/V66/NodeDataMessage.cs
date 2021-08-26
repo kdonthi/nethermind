@@ -23,7 +23,7 @@ namespace Nethermind.Network.P2P.Subprotocols.Eth.V66
         {
         }
 
-        public NodeDataMessage(long requestId, Eth.V63.NodeDataMessage ethMessage) : base(requestId, ethMessage)
+        public NodeDataMessage(ulong requestId, Eth.V63.NodeDataMessage ethMessage) : base(requestId, ethMessage)
         {
         }
     }
