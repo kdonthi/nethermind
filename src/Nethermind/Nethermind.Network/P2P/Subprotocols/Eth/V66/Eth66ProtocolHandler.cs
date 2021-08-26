@@ -20,11 +20,13 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using DotNetty.Buffers;
 using Nethermind.Core;
 using Nethermind.Core.Specs;
 using Nethermind.Logging;
 using Nethermind.Network.P2P.Subprotocols.Eth.V65;
 using Nethermind.Network.Rlpx;
+using Nethermind.Serialization.Rlp;
 using Nethermind.Stats;
 using Nethermind.Synchronization;
 using Nethermind.TxPool;
@@ -82,11 +84,22 @@ namespace Nethermind.Network.P2P.Subprotocols.Eth.V66
                     Handle(getBlockHeadersMessage);
                     break;
                 case Eth66MessageCode.BlockHeaders:
+                    IByteBuffer bufferBackup = message.Content.Duplicate();
                     _logger.Warn($"BlockHeadersMessage received RLP: {message.Content.Duplicate().ReadAllHex()}");
-                    BlockHeadersMessage headersMsg = Deserialize<BlockHeadersMessage>(message.Content);
-                    Metrics.Eth66BlockHeadersReceived++;
-                    ReportIn(headersMsg);
-                    Handle(headersMsg.EthMessage, size);
+                    
+                    try
+                    {
+                        BlockHeadersMessage headersMsg = Deserialize<BlockHeadersMessage>(message.Content);
+                        Metrics.Eth66BlockHeadersReceived++;
+                        ReportIn(headersMsg);
+                        Handle(headersMsg.EthMessage, size);
+                    }
+                    catch (RlpException exception)
+                    {
+                        Eth.V62.BlockHeadersMessage headersMsg = Deserialize<Eth.V62.BlockHeadersMessage>(bufferBackup);
+                        base.Handle(headersMsg, size);
+                    }
+                    
                     break;
                 case Eth66MessageCode.GetBlockBodies:
                     GetBlockBodiesMessage getBodiesMsg = Deserialize<GetBlockBodiesMessage>(message.Content);
