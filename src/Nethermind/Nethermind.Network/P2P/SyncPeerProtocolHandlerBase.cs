@@ -192,6 +192,45 @@ namespace Nethermind.Network.P2P
             StatsManager.ReportTransferSpeedEvent(Session.Node, TransferSpeedType.Headers, 0);
             throw new TimeoutException($"{Session} Request timeout in {nameof(GetBlockHeadersMessage)} with {message.MaxHeaders} max headers");
         }
+        
+        protected virtual async Task<BlockHeader[]> SendRequest62(GetBlockHeadersMessage message, CancellationToken token)
+        {
+            if (Logger.IsTrace)
+            {
+                Logger.Trace($"Sending headers request to {Session.Node:c}:");
+                Logger.Trace($"  Starting blockhash: {message.StartBlockHash}");
+                Logger.Trace($"  Starting number: {message.StartBlockNumber}");
+                Logger.Trace($"  Skip: {message.Skip}");
+                Logger.Trace($"  Reverse: {message.Reverse}");
+                Logger.Trace($"  Max headers: {message.MaxHeaders}");
+            }
+
+            Request<GetBlockHeadersMessage, BlockHeader[]> request = new(message);
+            _headersRequests.Send(request);
+
+            Task<BlockHeader[]> task = request.CompletionSource.Task;
+            using CancellationTokenSource delayCancellation = new();
+            using CancellationTokenSource compositeCancellation = CancellationTokenSource.CreateLinkedTokenSource(token, delayCancellation.Token);
+            Task firstTask = await Task.WhenAny(task, Task.Delay(Timeouts.Eth, compositeCancellation.Token));
+            if (firstTask.IsCanceled)
+            {
+                token.ThrowIfCancellationRequested();
+            }
+
+            if (firstTask == task)
+            {
+                delayCancellation.Cancel();
+                long elapsed = request.FinishMeasuringTime();
+                long bytesPerMillisecond = (long) ((decimal) request.ResponseSize / Math.Max(1, elapsed));
+                if (Logger.IsTrace) Logger.Trace($"{this} speed is {request.ResponseSize}/{elapsed} = {bytesPerMillisecond}");
+
+                StatsManager.ReportTransferSpeedEvent(Session.Node, TransferSpeedType.Headers, bytesPerMillisecond);
+                return task.Result;
+            }
+
+            StatsManager.ReportTransferSpeedEvent(Session.Node, TransferSpeedType.Headers, 0);
+            throw new TimeoutException($"{Session} Request timeout in {nameof(GetBlockHeadersMessage)} with {message.MaxHeaders} max headers");
+        }
 
         async Task<BlockHeader> ISyncPeer.GetHeadBlockHeader(Keccak hash, CancellationToken token)
         {
@@ -201,7 +240,7 @@ namespace Nethermind.Network.P2P
             msg.Reverse = 0;
             msg.Skip = 0;
 
-            BlockHeader[] headers = await SendRequest(msg, token);
+            BlockHeader[] headers = await SendRequest62(msg, token);
             return headers.Length > 0 ? headers[0] : null;
         }
 
